@@ -7,7 +7,7 @@ public class Class1
     OpenAIAPI openai = new OpenAIAPI(OpenAIKey);
     CompletionRequest completionRequest = new CompletionRequest();
   
-    public static string OpenAIKey = "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";
+    public static string OpenAIKey = "your-key";
 
 public async Task<string> UseChatGPT(string  chatMessages)
 {
