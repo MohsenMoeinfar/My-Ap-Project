@@ -1,0 +1,51 @@
+@page "/EditInterest"
+@inject NavigationManager Navigation
+@using Example
+<div>
+    <form>
+        <div class="form-group">
+            <label for="movie">Your New Interest movie:</label>
+            <input type="text" class="form-control" id="movie" @bind-value="newMovie" />
+        </div>
+
+        <div class="form-group">
+            <label for="music">Your New Interest music:</label>
+            <input type="text" class="form-control" id="music" @bind-value="newMusic" />
+        </div>
+
+        <div class="form-group">
+            <label for="sport">Your New Interest Sport:</label>
+            <input type="text" class="form-control" id="sport" @bind-value="newSport" />
+        </div>
+
+        <button type="button" class="btn btn-primary" @onclick="EditInterest">Edit Interest</button>
+    </form>
+    <button type="button" class="btn btn-secondary" @onclick="GoBack">BackToHome</button>
+</div>
+
+@code {
+    private string newMovie;
+    private string newMusic;
+    private string newSport;
+    private  ApiClient _apiClient = new ApiClient();
+
+    private async Task EditInterest()
+    {
+        await _apiClient.Client.EditInterestAsync(1, new UserInterest
+        {
+            Id = 1,
+            MovieInterest = newMovie,
+            MusicInterest = newMusic,
+            SportInterest = newSport
+        });
+        newMovie = string.Empty;
+        newSport = string.Empty;
+        newMusic = string.Empty;
+
+        Console.WriteLine("Your interests have been updated successfully.");
+    }
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+}

@@ -1,0 +1,279 @@
+﻿@page "/TodoApp"
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>ToDo</PageTitle>
+
+<h1>ToDo</h1>
+
+@if (tasks == null)
+{
+    <p>Loading...</p>
+}
+else if (tasks.Count == 0)
+{
+    <p>No tasks found.</p>
+}
+else
+{
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Due Date</th>
+                    <th>Is Completed</th>
+                    <th>Delete/Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var task in tasks)
+                {
+                    <tr>
+                        <td>@task.Id</td>
+                        <td>@task.Name</td>
+                        <td>@task.Description</td>
+                        <td>@task.DueDate.ToString("d")</td>
+                        <td>@task.IsComplete.ToString()</td>
+                        <td>
+                            <button class="action-button" @onclick="(() => DeleteTask(task.Id))">Delete</button>
+                            <button class="action-button" @onclick="() => EditTask(task.Id)">Edit</button>
+                        </td> 
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="button-container">
+    <button class="primary-button" @onclick="AddTaskPage">Add Task</button>
+    <button class="primary-button" @onclick="GoToDeleteTaskPage">Delete Task</button>
+    <button class="primary-button" @onclick="GoToEditTaskPage">Edit Task</button>
+    <button class="primary-button" @onclick="GoToSearchIdPage">Search By ID</button>
+    <button class="primary-button" @onclick="GoToSearchNamePage">Search By Name</button>
+    <button class="primary-button" @onclick="GoToSetStatusPage">Set Status</button>
+    <button class="primary-button" @onclick="GoToAddEdPage">Profile</button>
+    <button class="primary-button" @onclick="ConfirmDeleteAllTasks">Delete All Tasks</button>
+    <button class="primary-button" @onclick="Ai">Ai</button>
+</div>
+
+
+@code {
+    @using Example
+    @using Microsoft.AspNetCore.SignalR.Client
+    
+    private ApiClient _apiClient = new ApiClient();
+    private List<Example.ToDo> tasks = new List<Example.ToDo>();
+    public HubConnection connection;
+    public HubConnection connection2;
+    public HubConnection connection3;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        connection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs")
+            .Build();
+        connection2 = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs2")
+            .Build();
+        connection3 = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs3")
+            .Build();
+        connection.On("OnItemAdded", (Example.ToDo item) =>
+        {
+             InvokeAsync(() =>
+              {
+                        tasks.Add(item);
+                        tasks = tasks.OrderBy(t => t.Id).ToList();
+                        StateHasChanged();
+              });
+            
+        });
+        connection2.On("OnItemRemoved", (int item) =>
+        {
+         
+              InvokeAsync(() =>
+              {
+                        var DTarget = tasks.FirstOrDefault(t => t.Id == item);
+                        tasks.Remove(DTarget);
+                        tasks = tasks.OrderBy(t => t.Id).ToList();
+                        StateHasChanged();
+              });
+           
+        });
+        connection.On("OnItemUpdated",  (ToDo item) =>
+        {
+               InvokeAsync(() =>
+              {
+                        var TToRemove = tasks.FirstOrDefault(t => t.Id == item.Id);
+                        tasks.Remove(TToRemove);
+                        tasks.Add(item);
+                        tasks = tasks.OrderBy(t => t.Id).ToList();
+                        StateHasChanged();
+              });
+           
+        });
+        connection3.On("OnItemRemoved", async (List<ToDo> items) =>
+        {
+             InvokeAsync(() =>
+              {
+                        tasks.Clear();
+                        StateHasChanged();
+              });
+           
+        });
+        connection3.On("OnItemAdded", (List<ToDo> items) =>
+        {
+            InvokeAsync(() =>
+              {
+                        foreach(var item in items)
+                        {
+                            if(!tasks.Any(task => task.Id == item.Id))
+                            {
+                                tasks.Add(item);
+                            }
+                        }
+                        tasks = tasks.OrderBy(t => t.Id).ToList();
+                        StateHasChanged();
+              });
+           
+        });
+
+        await connection.StartAsync();
+        await connection2.StartAsync();
+        await connection3.StartAsync();
+        var taskList = await _apiClient.Client.GetAllTasksAsync();
+        tasks = taskList.ToList();
+    }
+    private async Task ConfirmDeleteAllTasks()
+    {
+        bool Confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete all tasks?");
+
+        if (Confirmed)
+        {
+            await GoToDeleteAll();
+        }
+    }
+    private void AddTaskPage()
+    {
+        Navigation.NavigateTo("/addtask");
+    }
+    
+    private void GoToDeleteTaskPage()
+    {
+        Navigation.NavigateTo("/deletetask");
+    }
+    
+    private void GoToEditTaskPage()
+    {
+        Navigation.NavigateTo("/EditTask2");
+    }
+
+    private async Task DeleteTask(int taskId)
+    {
+        await _apiClient.Client.DeleteTaskAsync(taskId);
+        tasks.RemoveAll(t => t.Id == taskId);
+        await connection2.SendAsync("RemoveItem" , taskId);
+    }
+    private async Task GoToDeleteAll()
+    {
+        var Goals  =  (await _apiClient.Client.GetAllTasksAsync()).ToList();
+        await _apiClient.Client.DeleteAllTasksAsync();
+        await connection3.SendAsync("RemoveItem",Goals);
+    }
+    
+    private void EditTask(int taskId)
+    {
+        Navigation.NavigateTo($"/edittask/{taskId}");
+    }
+    
+    private void GoToSearchIdPage()
+    {
+        Navigation.NavigateTo("/searchbyid");
+    }
+    
+    private void GoToSearchNamePage()
+    {
+        Navigation.NavigateTo("/searchbyname");
+    }
+    
+    private void GoToSetStatusPage()
+    {
+        Navigation.NavigateTo("/setstatus");
+    }
+    
+    private void GoToAddEdPage()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+    private void Ai()
+    {
+        Navigation.NavigateTo("/Ai");
+    }
+    
+}
+<style>
+    .table-container {
+        max-height: 500px; 
+        overflow-y: scroll;
+    }
+    body {
+        background-image: url('/images/background.jpg');
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f2f2f2;
+        color: #333;
+    }
+
+    td {
+        background-color: #fff;
+        color: #333;
+    }
+
+    .button-container {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .primary-button {
+   margin-right: 10px;
+   background-color: rgb(92, 142, 143);
+   color: rgb(255, 255, 255);
+   padding: 10px 20px;
+   border: none;
+   border-radius: 5px;
+   cursor: pointer;
+   transition: background-color 0.3s ease;
+ }
+
+.primary-button:hover {
+   background-color: rgb(122, 182, 183);
+}
+
+    .action-button:first-child {
+        background-color: red;
+    }
+
+   
+    .action-button:last-child {
+        background-color: green;
+    }
+
+</style>
+

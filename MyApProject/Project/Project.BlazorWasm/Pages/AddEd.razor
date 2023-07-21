@@ -1,0 +1,50 @@
+@page "/profile"
+@inject NavigationManager Navigation
+@using Example
+<h3>Please record your interests in three topics: movies, music, and sports. Use add or edit</h3>
+<button class="my-button" @onclick="AddClicked">Add Your Interest</button>
+<button class="my-button" @onclick="EditClicked">Edit Your Interest</button>
+<button class="my-button" @onclick="DeleteClicked">Delete Your Interest</button>
+<button class="btn btn-secondary" @onclick="Return" style="margin-top: 30px;" >BackToHome</button>
+
+@code {
+    private  ApiClient _apiClient = new ApiClient();
+    private void AddClicked()
+    {
+         Navigation.NavigateTo("/AddInterest");
+       
+    }
+
+    private void EditClicked()
+    {
+         Navigation.NavigateTo("/EditInterest");
+    }
+    private async Task DeleteClicked()
+    {
+        await _apiClient.Client.DeleteInterestAsync(1);
+
+    }
+    private void Return()
+    {
+        Navigation.NavigateTo("/TodoApp");
+    }
+}
+<style>
+    .my-button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .my-button:hover {
+        background-color: #45a049;
+    }
+</style>

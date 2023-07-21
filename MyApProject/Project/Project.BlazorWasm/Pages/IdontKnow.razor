@@ -1,0 +1,108 @@
+@page "/idontknowwhattodo"
+@inject NavigationManager Navigation
+@using System.Linq
+@using System.Collections.Generic
+
+<h3>I dont Know what to do</h3>
+
+<p>Enter task ID:</p>
+    <div>
+        <label for="TaskIds">Task IDs:</label>
+        <input type="text" id="TaskIds" @bind-value="TaskId" />
+        <button @onclick="AddTaskId">Add</button>
+    </div>
+
+    <div>
+        <label for="taskList">Task List:</label>
+        <select id="taskList" multiple size="10" style="width: 300px;">
+            @foreach (var TaskId in TaskIds)
+            {
+                <option>@TaskId</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <p>@Message</p>
+    </div>
+
+    <button type="button" @onclick="OkIDontKnow">OK</button>
+    <button type="button" class="btn btn-secondary" @onclick="GoBack">Go Back</button>
+
+
+@if (!string.IsNullOrWhiteSpace(result))
+{
+    <p>@result</p>
+}
+
+@code {
+     @using Example
+    private string TaskId;
+    private string Message;
+    private string result;
+    private List<string> TaskIds = new List<string>();
+    private ApiClient _apiClient = new ApiClient();
+    
+    private async Task AddTaskId()
+{
+    if (!string.IsNullOrWhiteSpace(TaskId))
+    {
+        if (int.TryParse(TaskId, out int id))
+        {
+            var task = await _apiClient.Client.SearchTaskByIdAsync(id);
+            if (task != null)
+            {
+                TaskIds.Add(TaskId);
+                TaskId = "";
+                Message = $"{TaskIds.Count} task IDs added to the list.";
+            }
+            else
+            {
+                Message = $"No task was found with ID {id}. Please enter a valid task ID.";
+            }
+        }
+        else
+        {
+            Message = "Please enter a valid task ID (an integer).";
+        }
+    }
+}
+
+    private async Task OkIDontKnow()
+    {
+        string TaskNamesAndDates = "";
+
+        foreach (var TaskId in TaskIds)
+        {
+            var tasks = (await _apiClient.Client.SearchTaskByIdAsync(int.Parse(TaskId)));
+
+            if (tasks != null)
+            {
+                
+                    TaskNamesAndDates += $" {tasks.Name} - Date: {tasks.DueDate.ToString("yyyy-MM-dd")} \n";
+                
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(TaskNamesAndDates))
+        {
+            try 
+            {
+               result =  (await _apiClient.Client.IdontKnowWhatToDoAsync(TaskNamesAndDates)).ToList()[0];
+            }
+            catch(Exception Ex)
+            {
+                Message = $"{Ex.Message}" ; 
+            }
+        }
+        else
+        {
+            result = "No task names found for the provided task IDs.";
+        }
+    }
+
+    public void GoBack()
+    {
+        Navigation.NavigateTo("/Ai");
+    }
+}

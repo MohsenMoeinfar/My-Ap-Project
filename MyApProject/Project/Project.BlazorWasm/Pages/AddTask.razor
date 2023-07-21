@@ -1,0 +1,122 @@
+@page "/addtask"
+@inject NavigationManager Navigation
+@using Example
+
+<h1>Add Task</h1>
+
+<form @onsubmit="AddTaskB">
+    <div>
+        <label for="id">ID:</label>
+        <input type="text" id="id" @bind="newTaskId" placeholder="Enter task ID" />
+    </div>
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" @bind="newTaskName" placeholder="Enter task name" />
+    </div>
+    <div>
+        <label for="description">Description:</label>
+        <textarea id="description" @bind="newTaskDescription" placeholder="Enter task description"></textarea>
+        
+    </div>
+    <div>
+        <label for="dueDate">Due Date:</label>
+        <input type="date" id="dueDate" @bind="newTaskDueDate" />
+    </div>
+    <div>
+        <label for="isCompleted">Is Completed:</label>
+        <input type="checkbox" id="isCompleted" @bind="newTaskIsComplete" />
+    </div>
+    <button type="submit" class="btn btn-primary">Save Task</button>
+</form>
+
+@if(!string.IsNullOrEmpty(Message))
+{
+    <div style="border: 1px solid rgb(92, 92, 168); padding: 10px; margin-top: 20px; color: @(@Message == "Task added successfully." ? "green" : "red")" >
+        <p style="font-weight: bold;">@Message</p>
+        <hr style="border-bottom: 1px solid black;">
+    </div>
+}
+
+<button class="btn btn-secondary" @onclick="Return" style="margin-top: 30px;" >BackToHome</button>
+
+@code {
+    @using Microsoft.AspNetCore.SignalR.Client;
+    private  ApiClient _apiClient = new ApiClient();
+    private Example.ToDo newTask = new Example.ToDo();
+    private string newTaskName;
+    private int newTaskId;
+    private string newTaskDescription;
+    private DateTime newTaskDueDate;
+    private bool newTaskIsComplete;
+    private string Message = "";
+
+    private HubConnection connection;
+    protected override async Task OnInitializedAsync()
+    {
+        connection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs")
+            .Build();
+
+        await connection.StartAsync();
+
+    }
+
+    private async Task AddTaskB()
+    {
+        try
+        {
+            Example.ToDo ToDoEx = await _apiClient.Client.SearchTaskByIdAsync(newTaskId);
+            if (ToDoEx != null ||   newTaskId <= 0)
+            {
+                Message = "A task with this ID already exists! or Invalid Id";
+                          
+            }
+            else
+            {
+                var mm = new Example.ToDo
+                {
+                    Id = newTaskId,
+                    Name = newTaskName,
+                    Description = newTaskDescription,
+                    IsComplete = newTaskIsComplete,
+                    DueDate = newTaskDueDate
+                };
+        
+                await _apiClient.Client.AddTaskAsync(mm);
+                await connection.SendAsync("AddItem", mm);
+                Message = "Task added successfully.";
+
+                newTaskId = 0;
+                newTaskName = string.Empty;
+                newTaskDescription = string.Empty;
+                newTaskIsComplete = false;
+                newTaskDueDate = DateTime.Now;
+           
+            }
+        }
+        catch (Exception e)
+        {
+            Message = "Invalid input";
+        }
+    }
+
+    private void Return()
+    {
+        Navigation.NavigateTo("/TodoApp");
+    }
+}
+
+<style>
+    #submit-btn 
+    {
+        margin-right: 20px;
+    }
+    #description {
+        vertical-align: middle;
+        margin: 20px 0;
+    }
+    #name 
+    {
+        margin-top: 20px;
+    }
+</style>

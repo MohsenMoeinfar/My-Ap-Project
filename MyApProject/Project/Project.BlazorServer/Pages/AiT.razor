@@ -1,0 +1,75 @@
+@page "/Ai"
+@inject NavigationManager Navigation
+<div class="circle-container">
+    <button class="circle-button" @onclick="() => BreakTask()">Break Task</button>
+    <button class="circle-button" @onclick="() => InspireTask()">Inspire Task</button>
+    <button class="circle-button" @onclick="() => IDontKnowWhatToDo()">I Don't Know What to Do</button>
+    <button class="circle-button" @onclick="() => AskStartingGuide()">Ask Starting Guide</button>
+    <button class="circle-button" @onclick="() => Categorization()">Categorization</button>
+    <button type="button" class="btn btn-secondary" @onclick="GoBack">Go Back</button>
+</div>
+
+@code {
+    @using Example
+    
+
+    public void BreakTask()
+    {
+        Navigation.NavigateTo("/breaktasks");
+
+    }
+    public void InspireTask()
+    {
+        Navigation.NavigateTo("/inspiretask");
+
+    }
+    public void IDontKnowWhatToDo()
+    {
+        Navigation.NavigateTo("/idontknowwhattodo");
+
+    }
+    public void AskStartingGuide()
+    {
+        Navigation.NavigateTo("/askstartingguide");
+
+    }
+    public void Categorization()
+    {
+        Navigation.NavigateTo("/categorization");
+
+    }
+    public void GoBack()
+   {
+        Navigation.NavigateTo("/TodoApp");
+   }
+
+}
+
+
+
+
+<style>
+.circle-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.circle-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+    margin: 10px;
+    border-radius: 50%;
+    background-color: #45A049;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+}
+</style>

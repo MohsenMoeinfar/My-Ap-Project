@@ -1,0 +1,99 @@
+@page "/edittask/{taskId:int}"
+@inject NavigationManager Navigation
+<PageTitle>Edit Task</PageTitle>
+
+<h1>Edit Task</h1>
+
+@if (task == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="form-container">
+        <form @onsubmit="UpdateTask">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" id="name" value="@task.Name" @oninput="UpdateName" />
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" @bind="task.Description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dueDate">Due Date</label>
+                <input type="date" class="form-control" id="dueDate" @bind="task.DueDate" />
+            </div>
+            <div class="form-group checkbox-container">
+                <label for="isComplete">Is Complete</label>
+                <input type="checkbox" id="isComplete" @bind="task.IsComplete"/>
+            </div>
+            <div class="form-group button-container">
+                <button type="submit" class="btn btn-primary">Update</button>
+                <button type="button" class="btn btn-secondary" @onclick="GoBack">BackToHome</button>
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    @using Example
+    @using Microsoft.AspNetCore.SignalR.Client;
+
+    [Parameter]
+    public int TaskId { get; set; }
+    private ApiClient _apiClient = new ApiClient();
+    private ToDo task;
+    private string Message = "";
+    private HubConnection connection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            task = await _apiClient.Client.SearchTaskByIdAsync(TaskId);
+            connection = new HubConnectionBuilder()
+                .WithUrl("http://localhost:5000/Dhbs")
+                .Build();
+
+            await connection.StartAsync();
+        }
+        catch(Exception e)
+        {
+            Message = $"Invalid input   {e.Message}";
+        }
+    }
+
+    private async Task UpdateTask()
+    {
+        try
+        {
+            await _apiClient.Client.EditTaskAsync(task);
+            await connection.SendAsync("UpdateItem", task);
+            Navigation.NavigateTo("/TodoApp");
+        }
+        catch(Exception e)
+        {
+            Message = $"Invalid input   {e.Message}";
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/TodoApp");
+    }
+
+    private void UpdateName(ChangeEventArgs e)
+    {
+        task.Name = e.Value?.ToString();
+    }
+}
+
+<style>
+    .checkbox-container {
+        margin-bottom: 1rem;
+    }
+    .button-container {
+        margin-top: 1rem;
+    }
+</style>

@@ -1,0 +1,53 @@
+<Window x:Class="Project.Wpf.CategorizationTaskWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project.Wpf"
+        mc:Ignorable="d"
+        Title="CategorizationTaskWindow" Height="850" Width="1500">
+        <Window.Background>
+          <SolidColorBrush Color="#00FA9A"/>
+       </Window.Background>
+         <Grid Margin="20">
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Text="Please write the names of your tasks for me to categorize and topic-model them"
+                 FontWeight="Bold"
+                   FontSize="16"  Margin="0,0,0,10" />
+
+  
+
+    <StackPanel Grid.Row="2">
+        <TextBlock Text="Task Names:" FontWeight="Bold"
+                   FontSize="16" />
+        <TextBox Name="TaskTextBox" Margin="-800,10,0,0" Width="300" Height="30"  Text="{Binding Inp, Mode=TwoWay}" />
+        <TextBlock Text="Number of Tasks :" FontWeight="Bold"
+                   FontSize="16" />
+        <TextBox Name="TaskTextBox2" Margin="-800,10,0,0" Width="300" Height="30"  Text="{Binding NumberOfTasks, Mode=TwoWay}" />
+          <Button Name="IDontKnowWhatToDo"
+            Content="Ok"
+            Click="btnIdontKnow_Click"
+            Width="200" Height="30"
+            Margin="-800,0,0,10" />
+        <TextBlock Text="Result:" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" />
+        <TextBox Name="ResultTextBox"
+                  FontWeight="Bold"
+                   FontSize="22"
+                    Background="DarkGray"
+                    Foreground="Green"
+                 Text="{Binding Res, Mode=TwoWay}"
+                 AcceptsReturn="True"
+                 Margin="0,0,0,10" Width="1500" Height="350" />
+
+     
+    </StackPanel>
+</Grid>
+</Window>
+
+

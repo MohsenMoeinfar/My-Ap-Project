@@ -1,0 +1,79 @@
+@page "/setstatus"
+@inject NavigationManager Navigation
+<h1>Set Task Status</h1>
+
+<p>Enter the task ID you want to change the status:</p>
+
+<input type="text" class="form-control" @bind-value="taskId" />
+
+<div class="form-check">
+    <input type="checkbox" class="form-check-input" id="isComplete" @bind-value="taskIsComplete" />
+    <label class="form-check-label" for="isComplete">Is Complete</label>
+</div>
+<button type="button" class="btn btn-primary" @onclick="UpdateTask">Update</button>
+<button type="button" class="btn btn-secondary" @onclick="GoHome">BackToHome</button>
+
+@if(!string.IsNullOrEmpty(Message))
+{
+    <div style="border: 1px solid black; padding: 10px; margin-top: 20px; color: @(Message == "Task Changed successfully." ? "green" : "red")">
+        <p style="font-weight: bold;">@Message</p>
+        <hr style="border-bottom: 1px solid black;">
+    </div>
+}
+@code {
+    @using Example
+    @using Microsoft.AspNetCore.SignalR.Client;
+    private int taskId;
+    private bool taskIsComplete;
+    private Example.ToDo task2;
+    private string Message = "";
+    private  ApiClient _apiClient = new ApiClient();
+    private HubConnection connection;
+    protected override async Task OnInitializedAsync()
+    { 
+            connection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs")
+            .Build();
+            await connection.StartAsync();
+    }
+
+     private async Task UpdateTask()
+    {
+        try
+        { 
+            
+            task2 = await _apiClient.Client.SearchTaskByIdAsync(taskId);
+            if (task2 == null || taskId <= 0)
+            {
+                Message = "A task with this ID does not exist! or Invalid Id";
+            }
+            else
+            {
+                    await _apiClient.Client.SetTaskStatusAsync(taskId, taskIsComplete);
+                    await connection.SendAsync("UpdateItem",  new ToDo{
+                        Name = task2.Name , 
+                        Id = task2.Id , 
+                        Description =task2.Description , 
+                        IsComplete = taskIsComplete , 
+                        DueDate = task2.DueDate
+                    });
+                    Message = "Task Changed successfully.";
+            }
+        
+        }
+        catch (Exception e)
+        {
+            Message = "Invalid input";
+        }
+        finally
+        {
+            taskId = 0;
+            taskIsComplete = false;
+        }
+    }
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/TodoApp");
+    }
+
+}

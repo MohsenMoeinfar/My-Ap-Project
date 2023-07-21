@@ -1,0 +1,56 @@
+@page "/EditTask2"
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Task</PageTitle>
+
+<h1>Edit Task</h1>
+
+<div class="form-group">
+    <label for="taskId">Task ID:</label>
+    <input id="taskId" class="form-control" @bind="taskId" />
+</div>
+
+<div class="form-group">
+    <button type="button" class="btn btn-primary" @onclick="EditTask">Edit</button>
+</div>
+@if(!string.IsNullOrEmpty(Message))
+{
+    <div style="border: 1px solid black; padding: 10px; margin-top: 20px; color: @(Message == "Task edi successfully." ? "green" : "red")">
+        <p style="font-weight: bold;">@Message</p>
+        <hr style="border-bottom: 1px solid black;">
+    </div>
+}
+<button class="btn btn-primary" @onclick="BacktoTodoApp">BackToHome</button>
+
+@code {
+   @using Example
+    private  ApiClient _apiClient = new ApiClient();
+    private string Message = "";
+    private int taskId;
+
+    private async Task EditTask()
+    {
+        try
+        {
+            Example.ToDo ToDoEx = await _apiClient.Client.SearchTaskByIdAsync(taskId);
+            if (ToDoEx == null || taskId <= 0)
+            {
+                Message = "A task with this ID does not exist! or Invalid Id";
+            }
+            else
+            {
+                Navigation.NavigateTo($"/edittask/{taskId}");
+            }
+        }
+        catch (Exception e)
+        {
+            Message = $"Invalid input {e.Message}";
+        }
+            
+    }
+    private void BacktoTodoApp()
+    {
+        Navigation.NavigateTo("/TodoApp");
+    }
+
+}

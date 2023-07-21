@@ -1,0 +1,67 @@
+@page "/SearchId/{taskId:int}"
+@inject NavigationManager Navigation
+@using Example
+
+<h1>Task Details</h1>
+
+@if (task == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Due Date</th>
+            <th>Is Complete</th>
+        </tr>
+        <tr>
+            <td>@task.Id</td>
+            <td>@task.Name</td>
+            <td>@task.Description</td>
+            <td>@task.DueDate.ToString("d")</td>
+            <td>@task.IsComplete.ToString()</td>
+        </tr>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int TaskId { get; set; }
+    private ApiClient _apiClient = new ApiClient();
+    private ToDo task;
+
+    protected override async Task OnInitializedAsync()
+    {
+       
+            task = await _apiClient.Client.SearchTaskByIdAsync(TaskId);
+        
+        
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/searchbyid");
+    }
+}
+
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #ddd;
+    }
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+</style>

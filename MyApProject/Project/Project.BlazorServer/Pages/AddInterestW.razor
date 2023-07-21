@@ -1,0 +1,73 @@
+@page "/AddInterest"
+@inject NavigationManager Navigation
+@using Example
+<div>
+    @if (existingInterests != null)
+    {
+        <p>You already have interests: Movie - @existingInterests.MovieInterest, Music - @existingInterests.MusicInterest, Sport - @existingInterests.SportInterest. Please use the Edit option to update your interests.</p>
+    }
+    else
+    {
+        <form>
+            <div class="form-group">
+                <label for="movie">Your Interest movie:</label>
+                <input type="text" class="form-control" id="movie" @bind-value="movieInterest" />
+            </div>
+
+            <div class="form-group">
+                <label for="music">Your Interest music:</label>
+                <input type="text" class="form-control" id="music" @bind-value="musicInterest" />
+            </div>
+
+            <div class="form-group">
+                <label for="sport">Your Interest Sport:</label>
+                <input type="text" class="form-control" id="sport" @bind-value="sportInterest" />
+            </div>
+
+            <button type="button" class="btn btn-primary" @onclick="AddInterest">Add Interest</button>
+        </form>
+  
+    }
+</div>
+@code {
+    private string movieInterest;
+    private string musicInterest;
+    private string sportInterest;
+    private UserInterest existingInterests;
+    private  ApiClient _apiClient = new ApiClient();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var interests = (await _apiClient.Client.GetAllInterestsAsync()).ToList();
+        if (interests.Count > 0)
+        {
+            existingInterests = interests[0];
+        }
+    }
+
+    private async Task AddInterest()
+    {
+        if (existingInterests != null)
+        {
+            Console.WriteLine("You already have interests. Please use the Edit option to update your interests.");
+            return;
+        }
+
+        await _apiClient.Client.AddInterestAsync(new UserInterest
+        {
+            Id = 1,
+            MovieInterest = movieInterest,
+            MusicInterest = musicInterest,
+            SportInterest = sportInterest
+        });
+        Console.WriteLine("Your interests have been added successfully.");
+        movieInterest = string.Empty;
+        musicInterest = string.Empty;
+        sportInterest = string.Empty;
+        Task.Delay(2000);
+        Navigation.NavigateTo("/TodoApp");
+
+
+       
+    }
+}

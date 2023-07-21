@@ -1,0 +1,64 @@
+@page "/Deletetask"
+@inject NavigationManager Navigation
+
+<h1>Delete Task</h1>
+
+<p>Enter the task ID you want to delete:</p>
+
+<input type="text" @bind="@taskId" />
+
+<button class="btn btn-danger" @onclick="DeleteTask">Delete</button>
+
+@if(!string.IsNullOrEmpty(Message))
+{
+    <div style="border: 1px solid black; padding: 10px; margin-top: 20px; color: @(Message == "Task deleted successfully." ? "green" : "red")">
+        <p style="font-weight: bold;">@Message</p>
+        <hr style="border-bottom: 1px solid black;">
+    </div>
+}
+<button class="btn btn-primary" @onclick="BacktoTodoApp">BackToHome</button>
+
+@code {
+    @using Microsoft.AspNetCore.SignalR.Client;
+    @using Example
+    private int taskId;
+    private  ApiClient _apiClient = new ApiClient();
+    private string Message = "";
+    private HubConnection connection2;
+    protected override async Task OnInitializedAsync()
+    {
+        connection2 = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs2")
+            .Build();
+
+        await connection2.StartAsync();
+
+    }
+
+    private async Task DeleteTask()
+    {
+        try
+        {
+            Example.ToDo ToDoEx = await _apiClient.Client.SearchTaskByIdAsync(taskId);
+            if (ToDoEx == null || taskId <= 0)
+            {
+                Message = "A task with this ID does not exist! or Invalid Id";
+            }
+            else
+            {
+                await _apiClient.Client.DeleteTaskAsync(taskId);
+                await connection2.SendAsync("RemoveItem" , taskId);
+                Message = "Task deleted successfully.";
+            }
+        }
+        catch (Exception e)
+        {
+            Message = "Invalid input";
+        }
+    }
+    private void BacktoTodoApp()
+    {
+        Navigation.NavigateTo("/TodoApp");
+    }
+
+}

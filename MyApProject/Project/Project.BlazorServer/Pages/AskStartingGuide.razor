@@ -1,0 +1,42 @@
+@page "/askstartingguide"
+@inject NavigationManager Navigation
+
+<h3>AskStartingGuide</h3>
+
+<p>Tell me the name of that task which you don't know where to begin  i can help you.</p>
+    <div>
+        <label for="taskName">Task Id:</label>
+        <input type="text" id="taskName" @bind-value="taskId"/>
+    </div>
+
+    <button type="button" @onclick="OnSubmit">OK</button>
+     <button type="button" class="btn btn-secondary" @onclick="GoBack">Go Back</button>
+
+
+@if (!string.IsNullOrWhiteSpace(result))
+{
+    <p>@result</p>
+}
+
+@code {
+    @using Example
+    private int taskId;
+    private string taskName;
+    private string result;
+    private ToDo Target;
+    private string Message;
+    private ApiClient _apiClient = new ApiClient();
+    private async Task OnSubmit()
+    {
+        Target = await _apiClient.Client.SearchTaskByIdAsync(taskId);
+        if(Target == null)
+        {
+            Message = "Task Not Found";
+        }
+        result = (await _apiClient.Client.AskStartingGuideAsync(Target.Name)).ToList()[0];
+    }
+    public void GoBack()
+   {
+        Navigation.NavigateTo("/Ai");
+   }
+}

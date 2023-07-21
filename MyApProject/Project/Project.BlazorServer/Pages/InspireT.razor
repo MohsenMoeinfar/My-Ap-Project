@@ -1,0 +1,78 @@
+@page "/inspiretask"
+@inject NavigationManager Navigation
+
+<h3>Inspire Task</h3>
+
+<p>Select which interest you would like to be inspired and motivated by (movie/music/sport), and kindly complete your interests in the profile section.</p>
+
+<label for="interest">Interest:</label>
+<select id="interest" @onchange="OnInterestSelected">
+    <option value="">--Select--</option>
+    <option value="movie">Movie</option>
+    <option value="music">Music</option>
+    <option value="sport">Sport</option>
+</select>
+<button type="button" class="btn btn-secondary" @onclick="GoBack">Go Back</button>
+
+
+@if (!string.IsNullOrWhiteSpace(selectedInterest))
+{
+    <div>
+        <label for="taskName">Task Id:</label>
+        <input type="text" id="taskName" @bind-value="taskId"/>
+    </div>
+
+    <button type="button" @onclick="OnSubmit">Inspire</button>
+}
+
+@if (!string.IsNullOrWhiteSpace(result))
+{
+    <p>@result</p>
+}
+
+@code {
+    @using Example
+    private string selectedInterest;
+    private int taskId;
+    private string result;
+    private string Message;
+    private ToDo Target;
+    private ApiClient _apiClient = new ApiClient();
+    private async Task OnSubmit()
+    {
+        string interest = "";
+
+        switch (selectedInterest)
+        {
+            case "movie":
+                interest = (await _apiClient.Client.GetInterestByIdAsync(1)).MovieInterest;
+                break;
+            case "music":
+                interest = (await _apiClient.Client.GetInterestByIdAsync(1)).MusicInterest;
+                break;
+            case "sport":
+                interest = (await _apiClient.Client.GetInterestByIdAsync(1)).SportInterest;
+                break;
+        }
+        Target = await _apiClient.Client.SearchTaskByIdAsync(taskId);
+        if(Target == null)
+        {
+                Message = "Task Not Found";
+        }
+        else
+        {
+                result = (await _apiClient.Client.InspireTaskAsync(interest, Target.Name)).ToList()[0];
+        }
+
+        
+    }
+
+    private void OnInterestSelected(ChangeEventArgs e)
+    {
+        selectedInterest = e.Value.ToString();
+    }
+    public void GoBack()
+   {
+        Navigation.NavigateTo("/Ai");
+   }
+}

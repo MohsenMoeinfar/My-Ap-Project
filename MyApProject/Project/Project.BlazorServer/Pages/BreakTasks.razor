@@ -1,0 +1,155 @@
+@page "/breaktasks"
+@inject NavigationManager Navigation
+<Modal @ref="modal">
+    @using BlazorModal
+    <ModalHeader>Add Tasks to Database</ModalHeader>
+    <ModalBody>
+        <p>Are you sure you want to add tasks to the database?</p>
+    </ModalBody>
+    <ModalFooter>
+        <button class="btn btn-primary" @onclick="AddTasksToDatabase">Yes</button>
+        <button class="btn btn-secondary" @onclick="() => modal.Hide()">No</button>
+
+    </ModalFooter>
+</Modal>
+<h1>Break Tasks</h1>
+ <form> 
+    <div class="form-group"> 
+    <label for="idid">Task Id You Want to Break:</label> 
+    <input type="text" class="form-control" id="idid" @bind-value="TaskId" />
+    <label for="name">SubMin:</label> <input type="text" class="form-control" id="name" @bind-value="SubMin" /> 
+     <button type="button" class="btn btn-primary" @onclick="BreakTasksB">Break Tasks</button> 
+    </div> 
+    <button type="button" class="btn btn-primary" @onclick="AddTaskToDb">Add TaskS To DataBase</button> 
+    </form>
+
+@if (ResTasks != null && ResTasks.Any())
+{
+<table class="table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Description</th>
+<th>Due Date</th>
+<th>Is Complete</th>
+</tr>
+</thead>
+<tbody>
+@foreach (var task in ResTasks)
+{
+<tr>
+<td>@task.Id</td>
+<td>@task.Name</td>
+<td>@task.Description</td>
+<td>@task.DueDate.ToString("d")</td>
+<td>@task.IsComplete.ToString()</td>
+</tr>
+}
+</tbody>
+</table>
+}
+else if (ResTasks != null && !ResTasks.Any())
+{
+<p>No tasks found.</p>
+}
+@if(!string.IsNullOrEmpty(Message))
+{
+    <div style="border: 1px solid black; padding: 10px; margin-top: 20px; color: @(Message == "Tasks Breaked successfully." ? "green" : "red")">
+        <p style="font-weight: bold;">@Message</p>
+        <hr style="border-bottom: 1px solid black;">
+    </div>
+}
+
+
+
+
+@code {
+    @using Example
+    @using Microsoft.AspNetCore.SignalR.Client;
+    private int TaskId;
+    private int SubMin;
+    private List<ToDo> ResTasks;
+    private ApiClient _apiClient = new ApiClient();
+    private Modal modal;
+    private string Message = "";
+    private HubConnection connection;
+    private ToDo Target;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+           
+            connection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5000/Dhbs3")
+            .Build();
+
+            await connection.StartAsync();
+        }
+        catch(Exception e)
+        {
+               
+        }
+    }
+
+    private async Task BreakTasksB()
+    {
+        try
+        {
+            if (SubMin <= 0)
+            {
+                Message = "A task with this ID does not exist! or Invalid Id";
+            }
+            else
+            {
+                Target = await _apiClient.Client.SearchTaskByIdAsync(TaskId);
+                if(Target == null)
+                {
+                    Message = "Task Not Found";
+                }
+                else
+                {
+                    ResTasks = (await _apiClient.Client.BreakTaskAsync(Target.Name , SubMin)).ToList();
+                     Message = "Tasks Breaked successfully.";
+                }
+            }
+        }
+        catch
+        {
+            Message = "Invalid input";
+        }
+        
+     
+    }
+    private void AddTaskToDb()
+    {
+        modal.Show();
+    }
+    
+
+
+    private async Task AddTasksToDatabase()
+    {
+        try
+        {
+        if(ResTasks == null)
+        {
+            Message = "There is no task to be added.";
+        }
+        else
+        {
+            foreach(var task in ResTasks)
+            {
+               await _apiClient.Client.AddTaskAsync(task);
+            }
+            await connection.SendAsync("AddItem",ResTasks);
+            modal.Hide();
+        }
+        }
+        catch(Exception e)
+        {
+            Message = $"Eror {e.Message}";
+        }
+      
+    }
+}
